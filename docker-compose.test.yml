@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:14
+    container_name: fgc-postgres-test
+    environment:
+      POSTGRES_DB: forgejo_classroom_test
+      POSTGRES_USER: fgc_test
+      POSTGRES_PASSWORD: fgc_test_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fgc_test -d forgejo_classroom_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /tmp
+    command: >
+      postgres -c fsync=off
+               -c synchronous_commit=off
+               -c full_page_writes=off
+               -c checkpoint_segments=32
+               -c checkpoint_completion_target=0.9
+               -c wal_buffers=16MB
+               -c shared_buffers=256MB
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: fgc-redis-test
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # Mock Forgejo server for testing (optional)
+  # mockserver:
+  #   image: mockserver/mockserver:latest
+  #   container_name: fgc-mockserver
+  #   ports:
+  #     - "1080:1080"
+  #   environment:
+  #     MOCKSERVER_LOG_LEVEL: INFO
+  #   volumes:
+  #     - ./test/fixtures/mockserver:/config
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+
+networks:
+  default:
+    name: fgc-test-network

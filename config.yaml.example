@@ -1,0 +1,62 @@
+# Forgejo Classroom Configuration Example
+# Copy this file to config.yaml and customize for your environment
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+  mode: "debug"  # debug or release
+  read_timeout: 30
+  write_timeout: 30
+  trusted_proxies:
+    - "127.0.0.1"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "fgc_user"
+  password: "fgc_password"
+  name: "forgejo_classroom"
+  ssl_mode: "prefer"  # disable, require, verify-ca, verify-full, prefer
+  max_connections: 25
+  max_idle_connections: 5
+  connection_max_lifetime: "1h"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  database: 0
+  pool_size: 10
+  timeout: "5s"
+
+forgejo:
+  base_url: "https://your-forgejo-instance.com"
+  token: "your-forgejo-api-token"
+  timeout: "30s"
+  rate_limit:
+    requests_per_minute: 60
+    burst_size: 10
+
+cache:
+  default_ttl: "15m"
+  classroom_ttl: "30m"
+  assignment_ttl: "15m"
+  roster_ttl: "5m"
+  submission_ttl: "2m"
+  enable_in_memory_fallback: true
+
+queue:
+  worker_count: 3
+  processing_timeout: "10m"
+  retry_attempts: 3
+  retry_delay: "30s"
+
+auth:
+  token_expiration: "24h"
+  jwt_secret: "your-jwt-secret-key-change-this"
+  require_https: true
+
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "console"  # console or json
+  output_path: ""  # empty for stdout
