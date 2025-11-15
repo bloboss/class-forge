@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### [2025-11-15 22:30] - Fix redis-cli Command Not Found in GitHub Actions
-**Change**: TBD (to be added after commit)
+**Change**: `cd35dc0`
 **Status**: ✅ Success
 
 #### What I Did
