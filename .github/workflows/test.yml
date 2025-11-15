@@ -1,0 +1,185 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  GO_VERSION: '1.23'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    # Service containers for integration tests
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: forgejo_classroom_test
+          POSTGRES_USER: fgc_test
+          POSTGRES_PASSWORD: fgc_test_password
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Verify dependencies
+        run: |
+          go mod download
+          go mod verify
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run go fmt check
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "The following files are not formatted:"
+            gofmt -s -l .
+            exit 1
+          fi
+
+      - name: Set up test environment
+        env:
+          FGC_DATABASE_HOST: localhost
+          FGC_DATABASE_PORT: 5432
+          FGC_DATABASE_NAME: forgejo_classroom_test
+          FGC_DATABASE_USER: fgc_test
+          FGC_DATABASE_PASSWORD: fgc_test_password
+          FGC_DATABASE_SSL_MODE: disable
+          FGC_REDIS_HOST: localhost
+          FGC_REDIS_PORT: 6379
+        run: |
+          # Wait for PostgreSQL to be ready
+          until pg_isready -h localhost -p 5432 -U fgc_test; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done
+
+          # Wait for Redis to be ready
+          until redis-cli -h localhost -p 6379 ping; do
+            echo "Waiting for Redis to be ready..."
+            sleep 2
+          done
+
+          echo "Services are ready!"
+
+      - name: Run unit tests
+        env:
+          FGC_DATABASE_HOST: localhost
+          FGC_DATABASE_PORT: 5432
+          FGC_DATABASE_NAME: forgejo_classroom_test
+          FGC_DATABASE_USER: fgc_test
+          FGC_DATABASE_PASSWORD: fgc_test_password
+          FGC_DATABASE_SSL_MODE: disable
+          FGC_REDIS_HOST: localhost
+          FGC_REDIS_PORT: 6379
+          FGC_FORGEJO_BASE_URL: http://localhost:3000
+          FGC_FORGEJO_TOKEN: test-token
+          FGC_AUTH_JWT_SECRET: test-jwt-secret-for-testing-only
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Run integration tests
+        if: success()
+        env:
+          FGC_DATABASE_HOST: localhost
+          FGC_DATABASE_PORT: 5432
+          FGC_DATABASE_NAME: forgejo_classroom_test
+          FGC_DATABASE_USER: fgc_test
+          FGC_DATABASE_PASSWORD: fgc_test_password
+          FGC_DATABASE_SSL_MODE: disable
+          FGC_REDIS_HOST: localhost
+          FGC_REDIS_PORT: 6379
+          FGC_FORGEJO_BASE_URL: http://localhost:3000
+          FGC_FORGEJO_TOKEN: test-token
+          FGC_AUTH_JWT_SECRET: test-jwt-secret-for-testing-only
+        run: |
+          if [ -d "test/integration" ]; then
+            go test -v ./test/integration/...
+          else
+            echo "No integration tests directory found, skipping..."
+          fi
+
+      - name: Check test coverage
+        run: |
+          go tool cover -func=coverage.out
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${COVERAGE}%"
+
+          # Set minimum coverage threshold (can be adjusted)
+          THRESHOLD=0
+
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+            exit 1
+          fi
+
+      - name: Upload coverage to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 30
+
+  build:
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Build server binary
+        run: go build -v -o bin/fgc-server ./cmd/fgc-server
+
+      - name: Build CLI binary
+        run: go build -v -o bin/fgc ./cmd/fgc
+
+      - name: Verify binaries
+        run: |
+          test -f bin/fgc-server
+          test -f bin/fgc
+          file bin/fgc-server
+          file bin/fgc
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: bin/
+          retention-days: 7
