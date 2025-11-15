@@ -52,7 +52,7 @@ func NewRouter(cfg *config.Config, logger *zap.Logger) *gin.Engine {
 
 func healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status":  "ok",
 		"service": "forgejo-classroom",
 	})
 }

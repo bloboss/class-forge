@@ -6,19 +6,19 @@ import (
 
 // Assignment represents an assignment entity
 type Assignment struct {
-	ID                  int64      `json:"id" db:"id"`
-	ClassroomID         int64      `json:"classroom_id" db:"classroom_id"`
-	Name                string     `json:"name" db:"name"`
-	Slug                string     `json:"slug" db:"slug"`
-	Description         string     `json:"description" db:"description"`
-	TemplateRepository  string     `json:"template_repository" db:"template_repository"`
-	TemplateRepositoryID int64     `json:"template_repository_id" db:"template_repository_id"`
-	Deadline            *time.Time `json:"deadline,omitempty" db:"deadline"`
-	MaxTeamSize         int        `json:"max_team_size" db:"max_team_size"`
-	AutoAccept          bool       `json:"auto_accept" db:"auto_accept"`
-	Public              bool       `json:"public" db:"public"`
-	CreatedAt           time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt           time.Time  `json:"updated_at" db:"updated_at"`
+	ID                   int64      `json:"id" db:"id"`
+	ClassroomID          int64      `json:"classroom_id" db:"classroom_id"`
+	Name                 string     `json:"name" db:"name"`
+	Slug                 string     `json:"slug" db:"slug"`
+	Description          string     `json:"description" db:"description"`
+	TemplateRepository   string     `json:"template_repository" db:"template_repository"`
+	TemplateRepositoryID int64      `json:"template_repository_id" db:"template_repository_id"`
+	Deadline             *time.Time `json:"deadline,omitempty" db:"deadline"`
+	MaxTeamSize          int        `json:"max_team_size" db:"max_team_size"`
+	AutoAccept           bool       `json:"auto_accept" db:"auto_accept"`
+	Public               bool       `json:"public" db:"public"`
+	CreatedAt            time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 // CreateAssignmentRequest represents the request to create an assignment
@@ -62,16 +62,16 @@ type AssignmentListResponse struct {
 
 // AssignmentStats represents statistics for an assignment
 type AssignmentStats struct {
-	AssignmentID      int64  `json:"assignment_id"`
-	TotalStudents     int    `json:"total_students"`
-	AcceptedCount     int    `json:"accepted_count"`
-	SubmissionCount   int    `json:"submission_count"`
-	TeamCount         int    `json:"team_count"`
+	AssignmentID      int64   `json:"assignment_id"`
+	TotalStudents     int     `json:"total_students"`
+	AcceptedCount     int     `json:"accepted_count"`
+	SubmissionCount   int     `json:"submission_count"`
+	TeamCount         int     `json:"team_count"`
 	AcceptanceRate    float64 `json:"acceptance_rate"`
 	SubmissionRate    float64 `json:"submission_rate"`
 	AverageCommits    float64 `json:"average_commits"`
-	OnTimeSubmissions int    `json:"on_time_submissions"`
-	LateSubmissions   int    `json:"late_submissions"`
+	OnTimeSubmissions int     `json:"on_time_submissions"`
+	LateSubmissions   int     `json:"late_submissions"`
 }
 
 // AcceptAssignmentRequest represents the request to accept an assignment

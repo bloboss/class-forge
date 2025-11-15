@@ -6,18 +6,18 @@ import (
 
 // Classroom represents a classroom entity
 type Classroom struct {
-	ID               int64     `json:"id" db:"id"`
-	Name             string    `json:"name" db:"name"`
-	Slug             string    `json:"slug" db:"slug"`
-	Description      string    `json:"description" db:"description"`
-	OrganizationName string    `json:"organization_name" db:"organization_name"`
-	OrganizationID   int64     `json:"organization_id" db:"organization_id"`
-	InstructorID     int64     `json:"instructor_id" db:"instructor_id"`
-	InstructorLogin  string    `json:"instructor_login" db:"instructor_login"`
-	Public           bool      `json:"public" db:"public"`
-	Archived         bool      `json:"archived" db:"archived"`
-	CreatedAt        time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at" db:"updated_at"`
+	ID               int64      `json:"id" db:"id"`
+	Name             string     `json:"name" db:"name"`
+	Slug             string     `json:"slug" db:"slug"`
+	Description      string     `json:"description" db:"description"`
+	OrganizationName string     `json:"organization_name" db:"organization_name"`
+	OrganizationID   int64      `json:"organization_id" db:"organization_id"`
+	InstructorID     int64      `json:"instructor_id" db:"instructor_id"`
+	InstructorLogin  string     `json:"instructor_login" db:"instructor_login"`
+	Public           bool       `json:"public" db:"public"`
+	Archived         bool       `json:"archived" db:"archived"`
+	CreatedAt        time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at" db:"updated_at"`
 	ArchivedAt       *time.Time `json:"archived_at,omitempty" db:"archived_at"`
 }
 
@@ -55,12 +55,12 @@ type ClassroomListResponse struct {
 
 // ClassroomStats represents statistics for a classroom
 type ClassroomStats struct {
-	ClassroomID     int64 `json:"classroom_id"`
-	TotalStudents   int   `json:"total_students"`
-	LinkedStudents  int   `json:"linked_students"`
-	TotalAssignments int  `json:"total_assignments"`
-	ActiveAssignments int `json:"active_assignments"`
-	TotalSubmissions int  `json:"total_submissions"`
+	ClassroomID       int64 `json:"classroom_id"`
+	TotalStudents     int   `json:"total_students"`
+	LinkedStudents    int   `json:"linked_students"`
+	TotalAssignments  int   `json:"total_assignments"`
+	ActiveAssignments int   `json:"active_assignments"`
+	TotalSubmissions  int   `json:"total_submissions"`
 }
 
 // Validate validates the create classroom request

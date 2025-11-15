@@ -21,24 +21,24 @@ type Config struct {
 
 // ServerConfig holds HTTP server configuration
 type ServerConfig struct {
-	Port         int    `mapstructure:"port"`
-	Host         string `mapstructure:"host"`
-	Mode         string `mapstructure:"mode"` // debug, release
-	ReadTimeout  int    `mapstructure:"read_timeout"`
-	WriteTimeout int    `mapstructure:"write_timeout"`
+	Port           int      `mapstructure:"port"`
+	Host           string   `mapstructure:"host"`
+	Mode           string   `mapstructure:"mode"` // debug, release
+	ReadTimeout    int      `mapstructure:"read_timeout"`
+	WriteTimeout   int      `mapstructure:"write_timeout"`
 	TrustedProxies []string `mapstructure:"trusted_proxies"`
 }
 
 // DatabaseConfig holds database connection configuration
 type DatabaseConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	Name     string `mapstructure:"name"`
-	SSLMode  string `mapstructure:"ssl_mode"`
-	MaxConnections int `mapstructure:"max_connections"`
-	MaxIdleConnections int `mapstructure:"max_idle_connections"`
+	Host                  string        `mapstructure:"host"`
+	Port                  int           `mapstructure:"port"`
+	User                  string        `mapstructure:"user"`
+	Password              string        `mapstructure:"password"`
+	Name                  string        `mapstructure:"name"`
+	SSLMode               string        `mapstructure:"ssl_mode"`
+	MaxConnections        int           `mapstructure:"max_connections"`
+	MaxIdleConnections    int           `mapstructure:"max_idle_connections"`
 	ConnectionMaxLifetime time.Duration `mapstructure:"connection_max_lifetime"`
 }
 
@@ -54,9 +54,9 @@ type RedisConfig struct {
 
 // ForgejoConfig holds Forgejo integration configuration
 type ForgejoConfig struct {
-	BaseURL string `mapstructure:"base_url"`
-	Token   string `mapstructure:"token"`
-	Timeout time.Duration `mapstructure:"timeout"`
+	BaseURL   string          `mapstructure:"base_url"`
+	Token     string          `mapstructure:"token"`
+	Timeout   time.Duration   `mapstructure:"timeout"`
 	RateLimit RateLimitConfig `mapstructure:"rate_limit"`
 }
 
@@ -68,20 +68,20 @@ type RateLimitConfig struct {
 
 // CacheConfig holds caching configuration
 type CacheConfig struct {
-	DefaultTTL        time.Duration `mapstructure:"default_ttl"`
-	ClassroomTTL      time.Duration `mapstructure:"classroom_ttl"`
-	AssignmentTTL     time.Duration `mapstructure:"assignment_ttl"`
-	RosterTTL         time.Duration `mapstructure:"roster_ttl"`
-	SubmissionTTL     time.Duration `mapstructure:"submission_ttl"`
-	EnableInMemoryFallback bool     `mapstructure:"enable_in_memory_fallback"`
+	DefaultTTL             time.Duration `mapstructure:"default_ttl"`
+	ClassroomTTL           time.Duration `mapstructure:"classroom_ttl"`
+	AssignmentTTL          time.Duration `mapstructure:"assignment_ttl"`
+	RosterTTL              time.Duration `mapstructure:"roster_ttl"`
+	SubmissionTTL          time.Duration `mapstructure:"submission_ttl"`
+	EnableInMemoryFallback bool          `mapstructure:"enable_in_memory_fallback"`
 }
 
 // QueueConfig holds async queue configuration
 type QueueConfig struct {
-	WorkerCount      int           `mapstructure:"worker_count"`
+	WorkerCount       int           `mapstructure:"worker_count"`
 	ProcessingTimeout time.Duration `mapstructure:"processing_timeout"`
-	RetryAttempts    int           `mapstructure:"retry_attempts"`
-	RetryDelay       time.Duration `mapstructure:"retry_delay"`
+	RetryAttempts     int           `mapstructure:"retry_attempts"`
+	RetryDelay        time.Duration `mapstructure:"retry_delay"`
 }
 
 // AuthConfig holds authentication configuration
@@ -93,7 +93,7 @@ type AuthConfig struct {
 
 // LoggingConfig holds logging configuration
 type LoggingConfig struct {
-	Level      string `mapstructure:"level"` // debug, info, warn, error
+	Level      string `mapstructure:"level"`  // debug, info, warn, error
 	Format     string `mapstructure:"format"` // json, console
 	OutputPath string `mapstructure:"output_path"`
 }

@@ -19,11 +19,11 @@ type Team struct {
 
 // TeamMember represents a member of a team
 type TeamMember struct {
-	ID         int64     `json:"id" db:"id"`
-	TeamID     int64     `json:"team_id" db:"team_id"`
-	StudentID  int64     `json:"student_id" db:"student_id"`
-	Role       string    `json:"role" db:"role"` // leader, member
-	JoinedAt   time.Time `json:"joined_at" db:"joined_at"`
+	ID        int64     `json:"id" db:"id"`
+	TeamID    int64     `json:"team_id" db:"team_id"`
+	StudentID int64     `json:"student_id" db:"student_id"`
+	Role      string    `json:"role" db:"role"` // leader, member
+	JoinedAt  time.Time `json:"joined_at" db:"joined_at"`
 }
 
 // CreateTeamRequest represents the request to create a team
