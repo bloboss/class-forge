@@ -84,11 +84,8 @@ jobs:
             sleep 2
           done
 
-          # Wait for Redis to be ready
-          until redis-cli -h localhost -p 6379 ping; do
-            echo "Waiting for Redis to be ready..."
-            sleep 2
-          done
+          # Redis service container has built-in health check, no need to manually wait
+          # The workflow will automatically wait for the health check to pass
 
           echo "Services are ready!"
 
