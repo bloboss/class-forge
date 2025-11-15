@@ -16,6 +16,7 @@ import (
 
 	"code.forgejo.org/forgejo/classroom/internal/api"
 	"code.forgejo.org/forgejo/classroom/internal/config"
+	"code.forgejo.org/forgejo/classroom/internal/database"
 )
 
 var (
@@ -49,7 +50,35 @@ func main() {
 		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
-	// TODO: Initialize database connection
+	// Initialize database connection
+	db, err := database.New(cfg, logger)
+	if err != nil {
+		logger.Fatal("Failed to initialize database", zap.Error(err))
+	}
+	defer db.Close()
+
+	logger.Info("Database initialized successfully")
+
+	// Run database migrations
+	migrateConfig := database.MigrateConfig{
+		MigrationsPath: "./migrations",
+		DatabaseName:   cfg.Database.Name,
+	}
+	if err := database.RunMigrations(db.DB, migrateConfig, logger); err != nil {
+		logger.Fatal("Failed to run database migrations", zap.Error(err))
+	}
+
+	// Get current migration version
+	version, dirty, err := database.GetMigrationVersion(db.DB, migrateConfig, logger)
+	if err != nil {
+		logger.Warn("Failed to get migration version", zap.Error(err))
+	} else {
+		logger.Info("Database migration status",
+			zap.Uint("version", version),
+			zap.Bool("dirty", dirty),
+		)
+	}
+
 	// TODO: Initialize cache
 	// TODO: Initialize Forgejo client
 	// TODO: Initialize services
