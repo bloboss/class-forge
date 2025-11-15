@@ -2,6 +2,61 @@
 
 ## [Unreleased]
 
+### [2025-11-15 22:30] - Fix redis-cli Command Not Found in GitHub Actions
+**Change**: `cd35dc0`
+**Status**: ✅ Success
+
+#### What I Did
+- Fixed GitHub Actions workflow error where `redis-cli` command was not found
+- Removed redundant manual Redis health check from workflow
+- Relied on built-in service container health checks instead
+
+#### Problem Identified
+**Location**: `.github/workflows/test.yml:88`
+
+The workflow attempted to run `redis-cli -h localhost -p 6379 ping` on the GitHub Actions runner (Ubuntu host), but `redis-cli` is not installed on the host machine. The command is only available inside the Redis container.
+
+**Root Cause**: The manual health check was redundant because GitHub Actions service containers already have built-in health checks configured (lines 36-42 in the workflow). The `redis` service container was configured with:
+```yaml
+options: >-
+  --health-cmd "redis-cli ping"
+  --health-interval 10s
+  --health-timeout 5s
+  --health-retries 5
+```
+
+This means GitHub Actions automatically waits for the Redis service to be healthy before proceeding with the workflow steps.
+
+#### Solution
+- Removed the manual `redis-cli` check from the "Set up test environment" step
+- Added explanatory comment noting that the service container has a built-in health check
+- GitHub Actions will automatically wait for the health check to pass before running tests
+
+#### Other redis-cli Usage (verified as correct)
+1. **docker-compose.test.yml:41** - Health check inside Redis container ✅
+   - Uses `["CMD", "redis-cli", "ping"]` inside the `redis:7-alpine` container where the command exists
+2. **Makefile:124** - Docker exec command ✅
+   - Uses `docker-compose exec -T redis-test redis-cli ping` which executes inside the container
+
+#### Tests
+- ✅ Workflow syntax is valid
+- ✅ Service containers have proper health checks configured
+- ✅ PostgreSQL health check remains functional (uses `pg_isready` on host which is available)
+
+#### Files Changed
+- `.github/workflows/test.yml` - Removed redundant redis-cli check (lines 87-91)
+
+#### References
+- GitHub Actions service container documentation
+- Redis Docker image documentation (redis:7-alpine includes redis-cli)
+
+#### Impact
+- Fixes CI/CD pipeline failures due to missing `redis-cli` on GitHub Actions runners
+- Workflow now relies on proper service container health checks
+- No behavioral change - Redis is still verified as ready before tests run
+
+---
+
 ### [2025-11-15 21:55] - Database Connection and CI/CD Implementation
 **Changes**: `62545a3`, `157670e`, `77da99b`, `f9aa12c`, `05a6a42`
 **Status**: ✅ Success
