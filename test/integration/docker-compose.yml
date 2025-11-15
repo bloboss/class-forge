@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:latest
+    container_name: forgejo-test
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - FORGEJO__database__DB_TYPE=sqlite3
+      - FORGEJO__database__PATH=/data/forgejo/forgejo.db
+      - FORGEJO__security__INSTALL_LOCK=true
+      - FORGEJO__security__SECRET_KEY=test-secret-key-change-in-production
+      - FORGEJO__security__INTERNAL_TOKEN=test-internal-token-change-in-production
+      - FORGEJO__server__DOMAIN=localhost
+      - FORGEJO__server__HTTP_PORT=3000
+      - FORGEJO__server__ROOT_URL=http://localhost:3000/
+      - FORGEJO__server__DISABLE_SSH=true
+      - FORGEJO__service__DISABLE_REGISTRATION=false
+      - FORGEJO__service__REQUIRE_SIGNIN_VIEW=false
+      - FORGEJO__api__ENABLE_SWAGGER=true
+    ports:
+      - "3000:3000"
+    volumes:
+      - forgejo-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  forgejo-data:
+    driver: local

@@ -17,6 +17,7 @@ import (
 	"code.forgejo.org/forgejo/classroom/internal/api"
 	"code.forgejo.org/forgejo/classroom/internal/config"
 	"code.forgejo.org/forgejo/classroom/internal/database"
+	"code.forgejo.org/forgejo/classroom/internal/forgejo"
 )
 
 var (
@@ -79,8 +80,24 @@ func main() {
 		)
 	}
 
+	// Initialize Forgejo client
+	forgejoClient, err := initForgejoClient(cfg, logger)
+	if err != nil {
+		logger.Fatal("Failed to initialize Forgejo client", zap.Error(err))
+	}
+	defer forgejoClient.Close()
+
+	logger.Info("Forgejo client initialized successfully")
+
+	// Perform startup health check on Forgejo
+	logger.Info("Performing Forgejo connectivity check...")
+	ctx := context.Background()
+	if err := forgejoClient.HealthCheck(ctx); err != nil {
+		logger.Fatal("Forgejo health check failed", zap.Error(err))
+	}
+	logger.Info("Forgejo connectivity verified")
+
 	// TODO: Initialize cache
-	// TODO: Initialize Forgejo client
 	// TODO: Initialize services
 
 	// Initialize Gin router
@@ -162,4 +179,21 @@ func initLogger() (*zap.Logger, error) {
 	}
 
 	return config.Build()
+}
+
+func initForgejoClient(cfg *config.Config, logger *zap.Logger) (*forgejo.Client, error) {
+	clientConfig := forgejo.ClientConfig{
+		BaseURL:   cfg.Forgejo.BaseURL,
+		Token:     cfg.Forgejo.Token,
+		Timeout:   cfg.Forgejo.Timeout,
+		Logger:    logger,
+		UserAgent: fmt.Sprintf("forgejo-classroom/%s", version),
+	}
+
+	client, err := forgejo.NewClient(clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Forgejo client: %w", err)
+	}
+
+	return client, nil
 }
