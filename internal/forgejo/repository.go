@@ -286,12 +286,12 @@ func (c *Client) ProtectBranch(ctx context.Context, owner, repo, branch string, 
 	)
 
 	_, _, err := c.client.CreateBranchProtection(owner, repo, gitea.CreateBranchProtectionOption{
-		BranchName:          branch,
-		EnablePush:          opts.EnablePush,
-		EnablePushWhitelist: opts.EnablePushWhitelist,
-		PushWhitelistUsernames: opts.PushWhitelistUsernames,
-		PushWhitelistTeams:     opts.PushWhitelistTeams,
-		EnableMergeWhitelist:   opts.EnableMergeWhitelist,
+		BranchName:              branch,
+		EnablePush:              opts.EnablePush,
+		EnablePushWhitelist:     opts.EnablePushWhitelist,
+		PushWhitelistUsernames:  opts.PushWhitelistUsernames,
+		PushWhitelistTeams:      opts.PushWhitelistTeams,
+		EnableMergeWhitelist:    opts.EnableMergeWhitelist,
 		MergeWhitelistUsernames: opts.MergeWhitelistUsernames,
 		MergeWhitelistTeams:     opts.MergeWhitelistTeams,
 	})
