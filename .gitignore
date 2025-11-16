@@ -1,5 +1,7 @@
 # Binaries
 /bin/
+/fgc-server
+/fgc
 *.exe
 *.exe~
 *.dll
