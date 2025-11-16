@@ -99,9 +99,11 @@ jobs:
           FGC_DATABASE_SSL_MODE: disable
           FGC_REDIS_HOST: localhost
           FGC_REDIS_PORT: 6379
-          FGC_FORGEJO_BASE_URL: http://localhost:3000
-          FGC_FORGEJO_TOKEN: test-token
+          FGC_FORGEJO_BASE_URL: ${{ secrets.FORGEJO_BASE_URL }}
+          FGC_FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
           FGC_AUTH_JWT_SECRET: test-jwt-secret-for-testing-only
+          FORGEJO_BASE_URL: ${{ secrets.FORGEJO_BASE_URL }}
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run integration tests
@@ -115,9 +117,11 @@ jobs:
           FGC_DATABASE_SSL_MODE: disable
           FGC_REDIS_HOST: localhost
           FGC_REDIS_PORT: 6379
-          FGC_FORGEJO_BASE_URL: http://localhost:3000
-          FGC_FORGEJO_TOKEN: test-token
+          FGC_FORGEJO_BASE_URL: ${{ secrets.FORGEJO_BASE_URL }}
+          FGC_FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
           FGC_AUTH_JWT_SECRET: test-jwt-secret-for-testing-only
+          FORGEJO_BASE_URL: ${{ secrets.FORGEJO_BASE_URL }}
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
         run: |
           if [ -d "test/integration" ]; then
             go test -v ./test/integration/...
