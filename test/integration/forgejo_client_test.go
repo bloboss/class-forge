@@ -224,6 +224,7 @@ func (s *ForgejoClientTestSuite) TestTeamOperations() {
 		FullName: "Test Organization for Teams",
 	})
 	s.NoError(err)
+	s.NotNil(org)
 
 	defer func() {
 		s.client.DeleteOrganization(s.ctx, orgName)

@@ -22,9 +22,10 @@ func (c *Client) GetUser(ctx context.Context, username string) (*gitea.User, err
 
 // UserExists checks if a user exists
 func (c *Client) UserExists(ctx context.Context, username string) (bool, error) {
-	_, _, err := c.client.GetUserInfo(username)
+	_, resp, err := c.client.GetUserInfo(username)
 	if err != nil {
-		if gitea.IsErrNotFound(err) {
+		// Check if it's a 404 error
+		if resp != nil && resp.StatusCode == 404 {
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to check user existence: %w", err)
@@ -134,23 +135,20 @@ func (c *Client) IsUserOrgMember(ctx context.Context, orgName, username string) 
 }
 
 // AddOrgMember adds a user to an organization
+// Note: In Gitea/Forgejo, organization membership is managed through teams.
+// To add a user to an organization, add them to one of the organization's teams.
+// This method is provided for interface compatibility but returns an error indicating
+// that direct organization membership management is not supported by the API.
 func (c *Client) AddOrgMember(ctx context.Context, orgName, username string) error {
-	c.logger.Debug("adding organization member",
+	c.logger.Debug("adding organization member via team",
 		zap.String("org", orgName),
 		zap.String("username", username),
 	)
 
-	_, err := c.client.AddOrgMembership(orgName, username)
-	if err != nil {
-		return fmt.Errorf("failed to add organization member: %w", err)
-	}
-
-	c.logger.Info("organization member added",
-		zap.String("org", orgName),
-		zap.String("username", username),
-	)
-
-	return nil
+	// The Gitea/Forgejo API doesn't support direct organization membership addition.
+	// Organization membership is managed through teams. Users become organization members
+	// by being added to one or more teams within the organization.
+	return fmt.Errorf("direct organization membership addition not supported by Gitea API - add user to a team instead using AddTeamMember")
 }
 
 // RemoveOrgMember removes a user from an organization
@@ -160,7 +158,7 @@ func (c *Client) RemoveOrgMember(ctx context.Context, orgName, username string) 
 		zap.String("username", username),
 	)
 
-	_, err := c.client.RemoveOrgMembership(orgName, username)
+	_, err := c.client.DeleteOrgMembership(orgName, username)
 	if err != nil {
 		return fmt.Errorf("failed to remove organization member: %w", err)
 	}
@@ -181,7 +179,7 @@ func (c *Client) ListOrgMembers(ctx context.Context, orgName string, page, limit
 		zap.Int("limit", limit),
 	)
 
-	members, _, err := c.client.ListOrgMembers(orgName, gitea.ListOrgMembersOptions{
+	members, _, err := c.client.ListOrgMembership(orgName, gitea.ListOrgMembershipOption{
 		ListOptions: gitea.ListOptions{
 			Page:     page,
 			PageSize: limit,

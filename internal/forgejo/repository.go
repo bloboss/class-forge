@@ -2,6 +2,7 @@ package forgejo
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"code.gitea.io/sdk/gitea"
@@ -105,9 +106,10 @@ func (c *Client) GetRepository(ctx context.Context, owner, repo string) (*gitea.
 
 // RepositoryExists checks if a repository exists
 func (c *Client) RepositoryExists(ctx context.Context, owner, repo string) (bool, error) {
-	_, _, err := c.client.GetRepo(owner, repo)
+	_, resp, err := c.client.GetRepo(owner, repo)
 	if err != nil {
-		if gitea.IsErrNotFound(err) {
+		// Check if it's a 404 error
+		if resp != nil && resp.StatusCode == 404 {
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to check repository existence: %w", err)
@@ -260,8 +262,8 @@ func (c *Client) CreateBranch(ctx context.Context, owner, repo, branchName, ref 
 	)
 
 	_, _, err := c.client.CreateBranch(owner, repo, gitea.CreateBranchOption{
-		BranchName: branchName,
-		OldRefName: ref,
+		BranchName:    branchName,
+		OldBranchName: ref,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create branch: %w", err)
@@ -360,15 +362,15 @@ func (c *Client) GetRepositoryFile(ctx context.Context, owner, repo, filepath, r
 		return nil, fmt.Errorf("failed to get repository file: %w", err)
 	}
 
-	if contents == nil {
+	if contents == nil || contents.Content == nil {
 		return nil, fmt.Errorf("file not found: %s", filepath)
 	}
 
 	// Decode base64 content
-	content, err := contents.DecodeContent()
+	content, err := base64.StdEncoding.DecodeString(*contents.Content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode file content: %w", err)
 	}
 
-	return []byte(content), nil
+	return content, nil
 }

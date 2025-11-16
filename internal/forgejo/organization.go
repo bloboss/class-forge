@@ -68,10 +68,10 @@ func (c *Client) GetOrganization(ctx context.Context, name string) (*gitea.Organ
 
 // OrganizationExists checks if an organization exists
 func (c *Client) OrganizationExists(ctx context.Context, name string) (bool, error) {
-	_, _, err := c.client.GetOrg(name)
+	_, resp, err := c.client.GetOrg(name)
 	if err != nil {
 		// Check if it's a 404 error
-		if gitea.IsErrNotFound(err) {
+		if resp != nil && resp.StatusCode == 404 {
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to check organization existence: %w", err)
