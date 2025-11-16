@@ -41,6 +41,32 @@ jobs:
         ports:
           - 6379:6379
 
+      forgejo:
+        image: codeberg.org/forgejo/forgejo:9
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+          FORGEJO__database__DB_TYPE: sqlite3
+          FORGEJO__database__PATH: /data/forgejo/forgejo.db
+          FORGEJO__security__INSTALL_LOCK: true
+          FORGEJO__security__SECRET_KEY: test-secret-key-for-ci-testing-only-do-not-use-in-production
+          FORGEJO__security__INTERNAL_TOKEN: test-internal-token-for-ci-testing-only-do-not-use-in-production
+          FORGEJO__server__DOMAIN: localhost
+          FORGEJO__server__HTTP_PORT: 3000
+          FORGEJO__server__ROOT_URL: http://localhost:3000/
+          FORGEJO__server__DISABLE_SSH: true
+          FORGEJO__service__DISABLE_REGISTRATION: false
+          FORGEJO__service__REQUIRE_SIGNIN_VIEW: false
+          FORGEJO__api__ENABLE_SWAGGER: true
+        options: >-
+          --health-cmd "curl -f http://localhost:3000/api/healthz || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 30s
+        ports:
+          - 3000:3000
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -89,6 +115,52 @@ jobs:
 
           echo "Services are ready!"
 
+      - name: Set up Forgejo test instance
+        run: |
+          # Wait for Forgejo to be ready
+          echo "Waiting for Forgejo to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/api/healthz > /dev/null 2>&1; then
+              echo "Forgejo is ready!"
+              break
+            fi
+            echo "Attempt $i: Forgejo not ready yet..."
+            sleep 2
+          done
+
+          # Create admin user using Forgejo CLI
+          echo "Creating admin user..."
+          docker exec ${{ job.services.forgejo.id }} forgejo admin user create \
+            --admin \
+            --username testadmin \
+            --password testpass123 \
+            --email admin@test.local \
+            --must-change-password=false || echo "Admin user may already exist"
+
+          # Generate API token using Forgejo API
+          echo "Generating API token..."
+          TOKEN_RESPONSE=$(curl -X POST http://localhost:3000/api/v1/users/testadmin/tokens \
+            -H "Content-Type: application/json" \
+            -u testadmin:testpass123 \
+            -d '{"name":"ci-test-token","scopes":["write:admin","write:organization","write:repository","write:user"]}')
+
+          # Extract token from response
+          FORGEJO_TOKEN=$(echo $TOKEN_RESPONSE | grep -o '"sha1":"[^"]*"' | cut -d'"' -f4)
+
+          if [ -z "$FORGEJO_TOKEN" ]; then
+            echo "Failed to create token, response: $TOKEN_RESPONSE"
+            exit 1
+          fi
+
+          echo "FORGEJO_TOKEN=$FORGEJO_TOKEN" >> $GITHUB_ENV
+          echo "Forgejo API token created successfully"
+
+          # Verify token works
+          curl -f http://localhost:3000/api/v1/user \
+            -H "Authorization: token $FORGEJO_TOKEN" || exit 1
+
+          echo "Forgejo setup complete!"
+
       - name: Run unit tests
         env:
           FGC_DATABASE_HOST: localhost
@@ -100,8 +172,10 @@ jobs:
           FGC_REDIS_HOST: localhost
           FGC_REDIS_PORT: 6379
           FGC_FORGEJO_BASE_URL: http://localhost:3000
-          FGC_FORGEJO_TOKEN: test-token
+          FGC_FORGEJO_TOKEN: ${{ env.FORGEJO_TOKEN }}
           FGC_AUTH_JWT_SECRET: test-jwt-secret-for-testing-only
+          FORGEJO_BASE_URL: http://localhost:3000
+          FORGEJO_TOKEN: ${{ env.FORGEJO_TOKEN }}
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run integration tests
@@ -116,8 +190,10 @@ jobs:
           FGC_REDIS_HOST: localhost
           FGC_REDIS_PORT: 6379
           FGC_FORGEJO_BASE_URL: http://localhost:3000
-          FGC_FORGEJO_TOKEN: test-token
+          FGC_FORGEJO_TOKEN: ${{ env.FORGEJO_TOKEN }}
           FGC_AUTH_JWT_SECRET: test-jwt-secret-for-testing-only
+          FORGEJO_BASE_URL: http://localhost:3000
+          FORGEJO_TOKEN: ${{ env.FORGEJO_TOKEN }}
         run: |
           if [ -d "test/integration" ]; then
             go test -v ./test/integration/...
