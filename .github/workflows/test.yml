@@ -44,10 +44,8 @@ jobs:
       forgejo:
         image: codeberg.org/forgejo/forgejo:9
         env:
-          USER_UID: 1000
-          USER_GID: 1000
           FORGEJO__database__DB_TYPE: sqlite3
-          FORGEJO__database__PATH: /data/forgejo/forgejo.db
+          FORGEJO__database__PATH: /tmp/forgejo.db
           FORGEJO__security__INSTALL_LOCK: true
           FORGEJO__security__SECRET_KEY: test-secret-key-for-ci-testing-only-do-not-use-in-production
           FORGEJO__security__INTERNAL_TOKEN: test-internal-token-for-ci-testing-only-do-not-use-in-production
@@ -59,6 +57,7 @@ jobs:
           FORGEJO__service__REQUIRE_SIGNIN_VIEW: false
           FORGEJO__api__ENABLE_SWAGGER: true
         options: >-
+          --tmpfs /tmp:rw,noexec,nosuid,size=1g
           --health-cmd "curl -f http://localhost:3000/api/healthz || exit 1"
           --health-interval 10s
           --health-timeout 5s
