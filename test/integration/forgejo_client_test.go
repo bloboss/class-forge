@@ -261,14 +261,24 @@ func TestForgejoClientIntegration(t *testing.T) {
 	suite.Run(t, new(ForgejoClientTestSuite))
 }
 
-// Standalone test for basic client creation (doesn't require Forgejo)
+// Standalone test for basic client creation
+// Note: The Gitea SDK makes an API call during client initialization to verify the connection,
+// so this test requires a running Forgejo instance with valid credentials.
 func TestClientCreation(t *testing.T) {
 	logger := zap.NewNop()
 
+	// Get Forgejo connection details from environment
+	baseURL := os.Getenv("FORGEJO_BASE_URL")
+	token := os.Getenv("FORGEJO_TOKEN")
+
 	t.Run("create client with valid config", func(t *testing.T) {
+		if baseURL == "" || token == "" {
+			t.Skip("Skipping: FORGEJO_BASE_URL and FORGEJO_TOKEN must be set")
+		}
+
 		client, err := forgejo.NewClient(forgejo.ClientConfig{
-			BaseURL: "https://forgejo.example.com",
-			Token:   "test-token",
+			BaseURL: baseURL,
+			Token:   token,
 			Logger:  logger,
 		})
 		require.NoError(t, err)
