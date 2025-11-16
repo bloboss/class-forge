@@ -45,7 +45,9 @@ jobs:
         image: codeberg.org/forgejo/forgejo:9
         env:
           FORGEJO__database__DB_TYPE: sqlite3
-          FORGEJO__database__PATH: /tmp/forgejo.db
+          FORGEJO__database__PATH: /tmp/forgejo/forgejo.db
+          FORGEJO__server__APP_DATA_PATH: /tmp/forgejo/data
+          FORGEJO__server__LFS_START_PATH: /tmp/forgejo/lfs
           FORGEJO__security__INSTALL_LOCK: true
           FORGEJO__security__SECRET_KEY: test-secret-key-for-ci-testing-only-do-not-use-in-production
           FORGEJO__security__INTERNAL_TOKEN: test-internal-token-for-ci-testing-only-do-not-use-in-production
@@ -127,14 +129,46 @@ jobs:
             sleep 2
           done
 
+          # Additional wait for Forgejo to fully initialize
+          echo "Waiting for Forgejo to fully initialize..."
+          sleep 5
+
+          # Create directories in container
+          echo "Creating Forgejo directories..."
+          docker exec ${{ job.services.forgejo.id }} mkdir -p /tmp/forgejo/data /tmp/forgejo/lfs
+
           # Create admin user using Forgejo CLI
           echo "Creating admin user..."
-          docker exec ${{ job.services.forgejo.id }} forgejo admin user create \
+          if docker exec -w /var/lib/gitea ${{ job.services.forgejo.id }} forgejo admin user create \
             --admin \
             --username testadmin \
             --password testpass123 \
             --email admin@test.local \
-            --must-change-password=false || echo "Admin user may already exist"
+            --must-change-password=false; then
+            echo "Admin user created successfully"
+          else
+            echo "Failed to create admin user, checking if user already exists..."
+            # Try to authenticate to verify user exists
+            if curl -f http://localhost:3000/api/v1/user -u testadmin:testpass123 > /dev/null 2>&1; then
+              echo "Admin user already exists, continuing..."
+            else
+              echo "Admin user does not exist and creation failed"
+              echo "Listing existing users..."
+              docker exec -w /var/lib/gitea ${{ job.services.forgejo.id }} forgejo admin user list || true
+              echo "Checking Forgejo logs..."
+              docker logs ${{ job.services.forgejo.id }} 2>&1 | tail -50
+              exit 1
+            fi
+          fi
+
+          # Verify admin user exists
+          echo "Verifying admin user exists..."
+          if ! curl -f http://localhost:3000/api/v1/user -u testadmin:testpass123 > /dev/null 2>&1; then
+            echo "Admin user authentication failed"
+            docker exec ${{ job.services.forgejo.id }} forgejo admin user list
+            exit 1
+          fi
+          echo "Admin user verified"
 
           # Generate API token using Forgejo API
           echo "Generating API token..."
